@@ -1,12 +1,12 @@
-import axios from 'axios';
 import type {
-  Reply,
   CreateReplyRequest,
-  UpdateReplyRequest,
   DeleteReplyRequest,
-  ReplyResponse
+  Reply,
+  ReplyResponse,
+  UpdateReplyRequest
 } from '@/interfaces/reply.interface';
 import { getAuthToken } from '@/lib/auth';
+import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_BE2_API_URL || 'http://localhost:8081/api';
 
@@ -48,15 +48,23 @@ export const replyService = {
   },
 
   async updateReply(request: UpdateReplyRequest): Promise<Reply> {
-    const response = await axios.put<ReplyResponse>(`${API_URL}/replies/update`, request, {
+
+    console.log('Updating reply with userProfileId:', request);
+
+    const response = await axios.put<ReplyResponse>(`${API_URL}/replies/${request.id}`, {
+      content: request.content,
+      userProfileId: request.userProfileId
+    }, {
       headers: getHeaders()
     });
     return response.data.data as Reply;
   },
 
   async deleteReply(request: DeleteReplyRequest): Promise<void> {
-    await axios.delete(`${API_URL}/replies/delete`, {
-      data: request,
+    await axios.delete(`${API_URL}/replies/${request.id}`, {
+      params: {
+        userProfileId: request.userProfileId
+      },
       headers: getHeaders()
     });
   }

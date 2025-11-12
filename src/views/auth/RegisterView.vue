@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import VInput from '@/components/common/VInput.vue'
-import VTextArea from '@/components/common/VTextArea.vue'
 import VButton from '@/components/common/VButton.vue'
-import VSelect from '@/components/common/VSelect.vue'
+import VInput from '@/components/common/VInput.vue'
 import VListInput from '@/components/common/VListInput.vue'
+import VSelect from '@/components/common/VSelect.vue'
+import VTextArea from '@/components/common/VTextArea.vue'
 import type { UserProfileRequest } from '@/interfaces/profile.interface'
 import { useUserProfileStore } from '@/stores/profile/profile.store'
+import { reactive } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
@@ -40,28 +40,14 @@ const handleRegister = async () => {
 
 <template>
   <main class="w-full min-h-screen bg-pink-500/20 pt-24 py-10 px-4 overflow-y-auto">
-    <div
-      class="mx-auto w-full max-w-3xl bg-white shadow-lg rounded-2xl p-6 md:p-8 flex flex-col gap-4"
-    >
+    <div class="mx-auto w-full max-w-3xl bg-white shadow-lg rounded-2xl p-6 md:p-8 flex flex-col gap-4">
       <h1 class="text-pink-600 font-bold text-xl">Register</h1>
-      
+
       <form @submit.prevent="handleRegister" class="flex flex-col gap-6 py-4">
         <div class="grid grid-cols-2 gap-4">
-          <VInput 
-            v-model="profileModel.username" 
-            id="username" 
-            name="username" 
-            label="Username" 
-            required
-          />
-          <VInput 
-            v-model="profileModel.password" 
-            id="password" 
-            name="password" 
-            type="password" 
-            label="Password" 
-            required
-          />
+          <VInput v-model="profileModel.username" id="username" name="username" label="Username" required />
+          <VInput v-model="profileModel.password" id="password" name="password" type="password" label="Password"
+            required />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -71,27 +57,15 @@ const handleRegister = async () => {
 
         <div class="grid grid-cols-2 gap-4">
           <VInput v-model="profileModel.email" id="email" name="email" type="email" label="Email" required />
-          <VInput
-            v-model="profileModel.phoneNumber"
-            id="phone"
-            name="phone"
-            type="tel"
-            label="Nomor Telepon"
-            required
-          />
+          <VInput v-model="profileModel.phoneNumber" id="phone" name="phone" type="tel" label="Nomor Telepon"
+            required />
         </div>
 
         <VTextArea v-model="profileModel.bio" id="description" name="description" label="Bio" />
 
         <div class="grid grid-cols-2 gap-4">
-          <VInput
-            id="birthdate"
-            name="birthdate"
-            type="date"
-            v-model="profileModel.birthdate"
-            label="Tanggal Lahir"
-            required
-          />
+          <VInput id="birthdate" name="birthdate" type="date" v-model="profileModel.birthdate" label="Tanggal Lahir"
+            required />
           <VSelect id="gender" name="gender" label="Jenis Kelamin" v-model="profileModel.gender" required>
             <option value="">Pilih Jenis Kelamin...</option>
             <option value="MALE">Laki-laki</option>
@@ -108,18 +82,10 @@ const handleRegister = async () => {
         </div>
 
         <div class="flex justify-end gap-2 pt-4">
-          <VButton
-            @click="router.push('/login')"
-            type="button"
-            class="bg-slate-600 hover:bg-slate-800 text-white"
-          >
+          <VButton @click="router.push('/login')" type="button" class="bg-slate-600 hover:bg-slate-800 text-white">
             Kembali ke Login
           </VButton>
-          <VButton 
-            type="submit" 
-            class="bg-pink-600 hover:bg-pink-800 text-white"
-            :disabled="userProfileStore.loading"
-          >
+          <VButton type="submit" class="bg-pink-600 hover:bg-pink-800 text-white" :disabled="userProfileStore.loading">
             {{ userProfileStore.loading ? 'Registering...' : 'Register' }}
           </VButton>
         </div>
@@ -128,5 +94,4 @@ const handleRegister = async () => {
   </main>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

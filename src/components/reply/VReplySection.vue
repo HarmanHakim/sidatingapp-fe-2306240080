@@ -5,18 +5,9 @@
     <!-- Reply Form -->
     <div v-if="isAuthenticated" class="mb-6">
       <form @submit.prevent="handleSubmitReply" class="space-y-3">
-        <VTextArea
-          id="reply-content"
-          v-model="replyContent"
-          placeholder="Write a reply..."
-          :rows="3"
-          :disabled="replyStore.loading"
-        />
-        <VButton
-          type="submit"
-          :disabled="!replyContent.trim() || replyStore.loading"
-          class="w-full sm:w-auto"
-        >
+        <VTextArea id="reply-content" v-model="replyContent" placeholder="Write a reply..." :rows="3"
+          :disabled="replyStore.loading" />
+        <VButton type="submit" :disabled="!replyContent.trim() || replyStore.loading" class="w-full sm:w-auto">
           {{ replyStore.loading ? 'Posting...' : 'Post Reply' }}
         </VButton>
       </form>
@@ -40,11 +31,7 @@
         <p class="text-gray-500">No replies yet. Be the first to reply!</p>
       </div>
 
-      <div
-        v-for="reply in replies"
-        :key="reply.id"
-        class="border-b border-gray-200 pb-4 last:border-b-0"
-      >
+      <div v-for="reply in replies" :key="reply.id" class="border-b border-gray-200 pb-4 last:border-b-0">
         <div class="flex items-start space-x-3">
           <div class="flex-shrink-0">
             <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
@@ -70,18 +57,37 @@
                   {{ formatDate(reply.createdAt) }}
                 </span>
 
-                <button
-                  v-if="canDeleteReply(reply)"
-                  @click="handleDeleteReply(reply.id)"
-                  class="text-red-600 hover:text-red-800 text-sm"
-                  :disabled="replyStore.loading"
-                >
+                <button v-if="canModifyReply(reply)" @click="handleEditReply(reply)"
+                  class="text-blue-600 hover:text-blue-800 text-sm" :disabled="replyStore.loading">
+                  Edit
+                </button>
+
+                <button v-if="canModifyReply(reply)" @click="handleDeleteReply(reply.id)"
+                  class="text-red-600 hover:text-red-800 text-sm" :disabled="replyStore.loading">
                   Delete
                 </button>
               </div>
             </div>
 
-            <p class="mt-2 text-gray-700 whitespace-pre-wrap">{{ reply.content }}</p>
+            <!-- Edit Form -->
+            <div v-if="editingReplyId === reply.id" class="mt-3">
+              <form @submit.prevent="handleUpdateReply(reply.id)" class="space-y-2">
+                <VTextArea id="edit-reply-content" v-model="editContent" placeholder="Edit your reply..." :rows="3"
+                  :disabled="replyStore.loading" />
+                <div class="flex space-x-2">
+                  <VButton type="submit" :disabled="!editContent.trim() || replyStore.loading" class="text-sm">
+                    {{ replyStore.loading ? 'Saving...' : 'Save' }}
+                  </VButton>
+                  <VButton type="button" @click="cancelEdit" :disabled="replyStore.loading"
+                    class="text-sm bg-gray-500 hover:bg-gray-600">
+                    Cancel
+                  </VButton>
+                </div>
+              </form>
+            </div>
+
+            <!-- Reply Content -->
+            <p v-else class="mt-2 text-gray-700 whitespace-pre-wrap">{{ reply.content }}</p>
           </div>
         </div>
       </div>
@@ -90,12 +96,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useReplyStore } from '@/stores/reply/reply.store';
-import { useAuthStore } from '@/stores/auth/auth.store';
-import VTextArea from '@/components/common/VTextArea.vue';
 import VButton from '@/components/common/VButton.vue';
+import VTextArea from '@/components/common/VTextArea.vue';
 import type { Reply } from '@/interfaces/reply.interface';
+import { useAuthStore } from '@/stores/auth/auth.store';
+import { useReplyStore } from '@/stores/reply/reply.store';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   postId: string;
@@ -105,16 +111,19 @@ const replyStore = useReplyStore();
 const authStore = useAuthStore();
 
 const replyContent = ref('');
+const editingReplyId = ref<string | null>(null);
+const editContent = ref('');
 
 const isAuthenticated = computed(() => !!authStore.token);
 const currentUserId = computed(() => authStore.user?.id);
+const isAdmin = computed(() => authStore.user?.roleName === 'ADMIN');
 
 const replies = computed(() => {
   return replyStore.replies.filter(r => r.postId === props.postId);
 });
 
-const canDeleteReply = (reply: Reply) => {
-  return currentUserId.value === reply.userProfileId;
+const canModifyReply = (reply: Reply) => {
+  return currentUserId.value === reply.userProfileId || isAdmin.value;
 };
 
 const handleSubmitReply = async () => {
@@ -135,13 +144,45 @@ const handleSubmitReply = async () => {
 
 const handleDeleteReply = async (replyId: string) => {
   if (!confirm('Are you sure you want to delete this reply?')) return;
+  if (!currentUserId.value) return;
 
   try {
-    await replyStore.deleteReply({ id: replyId });
+    await replyStore.deleteReply({
+      id: replyId,
+      userProfileId: currentUserId.value
+    });
     replyStore.clearError();
   } catch (error) {
     console.error('Failed to delete reply:', error);
   }
+};
+
+const handleEditReply = (reply: Reply) => {
+  editingReplyId.value = reply.id;
+  editContent.value = reply.content;
+};
+
+const handleUpdateReply = async (replyId: string) => {
+  if (!editContent.value.trim()) return;
+  if (!currentUserId.value) return;
+
+  try {
+    await replyStore.updateReply({
+      id: replyId,
+      content: editContent.value.trim(),
+      userProfileId: currentUserId.value as string
+    });
+    editingReplyId.value = null;
+    editContent.value = '';
+    replyStore.clearError();
+  } catch (error) {
+    console.error('Failed to update reply:', error);
+  }
+};
+
+const cancelEdit = () => {
+  editingReplyId.value = null;
+  editContent.value = '';
 };
 
 const formatDate = (dateString: string) => {

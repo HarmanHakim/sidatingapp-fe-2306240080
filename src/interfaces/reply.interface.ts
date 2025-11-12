@@ -35,10 +35,12 @@ export interface CreateReplyRequest {
 export interface UpdateReplyRequest {
   id: string;
   content: string;
+  userProfileId: string;
 }
 
 export interface DeleteReplyRequest {
   id: string;
+  userProfileId: string;
 }
 
 export interface ReplyResponse {
