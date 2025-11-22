@@ -10,6 +10,8 @@ ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_BE2_API_URL=$VITE_BE2_API_URL
 
 RUN npm ci
+
+
 COPY . .
 
 # Pastikan variabel API tersimpan untuk build, sesuaikan dengan attr di env kalian
