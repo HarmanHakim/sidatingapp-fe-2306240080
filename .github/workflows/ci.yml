@@ -37,6 +37,7 @@ jobs:
           path: |
             dist/
             Dockerfile
+            nginx.conf
             k8s/deployment.yaml
             k8s/service.yaml
             k8s/ingress.yaml
