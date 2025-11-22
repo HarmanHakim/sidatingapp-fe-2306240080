@@ -7,7 +7,7 @@ on:
       - feat/praktikum-9
 
 env:
-  DOCKER_IMAGE_NAME: harmanhakim/sidating-fe
+  DOCKER_IMAGE_NAME: harmanhakim/sidatingapp-fe
   IMAGE_TAG: ${{ github.sha }}
   VITE_API_URL: ${{ secrets.VITE_API_URL }}
   VITE_BE2_API_URL: ${{ secrets.VITE_BE2_API_URL }}
