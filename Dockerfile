@@ -28,7 +28,6 @@ COPY . .
 # Pastikan variabel API tersimpan untuk build, sesuaikan dengan attr di env kalian
 
 RUN echo "VITE_API_URL=$VITE_API_URL" > .env.production && \
-
     echo "VITE_BE2_API_URL=$VITE_BE2_API_URL" >> .env.production
 
 
