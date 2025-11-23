@@ -12,6 +12,7 @@ import {
 } from '@/lib/auth';
 
 const basePostUrl = import.meta.env.VITE_API_URL + '/auth';
+console.log(basePostUrl)
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -43,10 +44,10 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('token', this.token);
         setLocalStorage('user', this.user);
       } catch (error) {
-          this.error = error instanceof Error ? error.message : 'Unknown error';
-          toast.error(`Error saat memuat post: ${this.error}`);
+        this.error = error instanceof Error ? error.message : 'Unknown error';
+        toast.error(`Error saat memuat post: ${this.error}`);
       } finally {
-          this.loading = false;
+        this.loading = false;
       }
     },
 
