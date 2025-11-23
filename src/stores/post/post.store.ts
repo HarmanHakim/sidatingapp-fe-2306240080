@@ -7,6 +7,7 @@ import { handleAuthError, getAuthToken } from '@/lib/auth';
 import { useRouter } from 'vue-router';
 
 const basePostUrl = import.meta.env.VITE_API_URL + '/posts';
+console.log(basePostUrl)
 
 export const usePostStore = defineStore('post', {
     state: () => ({
@@ -27,12 +28,12 @@ export const usePostStore = defineStore('post', {
                 if (userId) params.userId = userId;
                 if (date) params.date = date;
 
-                const response = await axios.get<CommonResponseInterface<Post[]>>(basePostUrl, { 
+                const response = await axios.get<CommonResponseInterface<Post[]>>(basePostUrl, {
                     params,
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
-                 });
+                });
                 this.posts = response.data.data;
 
                 if (this.posts.length === 0) {
