@@ -6,7 +6,7 @@ import { toast } from 'vue-sonner';
 import { handleAuthError, getAuthToken } from '@/lib/auth';
 import { useRouter } from 'vue-router';
 
-const basePostUrl = import.meta.env.VITE_API_URL + '/posts';
+const basePostUrl = import.meta.env.VITE_API_URL || 'http://2306240080-sidating-be1.hafizmuh.site' + '/posts';
 console.log(basePostUrl)
 
 export const usePostStore = defineStore('post', {

@@ -8,7 +8,7 @@ import type {
 import { getAuthToken } from '@/lib/auth';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_BE2_API_URL || 'http://localhost:8081/api';
+const API_URL = import.meta.env.VITE_BE2_API_URL || 'http://2306240080-sidating-be2.hafizmuh.site/api';
 
 const getHeaders = () => {
   const token = getAuthToken();
