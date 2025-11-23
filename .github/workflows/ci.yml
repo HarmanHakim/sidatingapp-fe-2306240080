@@ -1,4 +1,3 @@
-
 name: CI Pipeline
 
 on:
@@ -13,65 +12,44 @@ env:
   VITE_BE2_API_URL: ${{ secrets.VITE_BE2_API_URL }}
 
 jobs:
-  build:
+  docker-build-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Set up Docker
+        run: sudo apt-get update && sudo apt-get install -y docker.io rsync openssh-client
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Build app
-        run: npm run build
+      - name: Rsync files to EC2
+        run: |
+          rsync -avz --delete --exclude=node_modules --exclude=.git . ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app/
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-files
-          path: |
-            dist/
-            Dockerfile
-            nginx.conf
-            k8s/deployment.yaml
-            k8s/service.yaml
-            k8s/ingress.yaml
-          retention-days: 1
-
-  docker-push:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-files
-
-      - name: Login into Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      - name: Build Docker image
-        run: docker build --build-arg VITE_API_URL=$VITE_API_URL --build-arg VITE_BE2_API_URL=$VITE_BE2_API_URL -t $DOCKER_IMAGE_NAME:$IMAGE_TAG .
-
-      - name: Push Docker image
-        run: docker push $DOCKER_IMAGE_NAME:$IMAGE_TAG
+      - name: Build and push Docker image on EC2
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            cd ~/app &&
+            sudo docker build --build-arg VITE_API_URL=${{ env.VITE_API_URL }} --build-arg VITE_BE2_API_URL=${{ env.VITE_BE2_API_URL }} -t $DOCKER_IMAGE_NAME:$IMAGE_TAG . &&
+            echo '${{ secrets.DOCKER_PASSWORD }}' | sudo docker login -u '${{ secrets.DOCKER_USERNAME }}' --password-stdin &&
+            sudo docker push $DOCKER_IMAGE_NAME:$IMAGE_TAG
+          "
 
   deploy:
     runs-on: ubuntu-latest
-    needs: docker-push
+    needs: docker-build-push
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-files
+      - name: Checkout source
+        uses: actions/checkout@v4
 
       - name: Install SSH
-        run: sudo apt-get update && sudo apt-get install -y ssh
+        run: sudo apt-get update && sudo apt-get install -y openssh-client
 
       - name: Setup SSH key
         run: |
@@ -90,8 +68,13 @@ jobs:
           scp k8s/service.yaml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app/k8s/service.yaml
           scp k8s/ingress.yaml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app/k8s/ingress.yaml
 
-      - name: Apply to k3s
+      - name: Apply to k3s and cleanup
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl apply -f ~/app/k8s/deployment.yaml"
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl apply -f ~/app/k8s/service.yaml"
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl apply -f ~/app/k8s/ingress.yaml"
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl apply -f ~/app/k8s/deployment.yaml &&
+            sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl apply -f ~/app/k8s/service.yaml &&
+            sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl apply -f ~/app/k8s/ingress.yaml &&
+            sudo KUBECONFIG=/etc/rancher/k3s/k3s.yaml kubectl rollout restart deployment/sidatingapp-fe &&
+            sudo docker image prune -a -f &&
+            sudo docker container prune -f
+          "
