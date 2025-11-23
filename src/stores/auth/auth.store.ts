@@ -11,7 +11,7 @@ import {
   getCurrentUser
 } from '@/lib/auth';
 
-const basePostUrl = import.meta.env.VITE_API_URL || 'http://2306240080-sidating-be1.hafizmuh.site' + '/auth';
+const basePostUrl = import.meta.env.VITE_API_URL || 'http://2306240080-sidating-be1.hafizmuh.site/api' + '/auth';
 console.log(basePostUrl)
 
 export const useAuthStore = defineStore('auth', {

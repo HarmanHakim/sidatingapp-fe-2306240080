@@ -6,7 +6,7 @@ import type { CommonResponseInterface } from '@/interfaces/common.response.inter
 import { handleAuthError, getAuthToken } from '@/lib/auth';
 import { useRouter } from 'vue-router';
 
-const baseUserProfileUrl = import.meta.env.VITE_API_URL || 'http://2306240080-sidating-be1.hafizmuh.site' + '/profile';
+const baseUserProfileUrl = import.meta.env.VITE_API_URL || 'http://2306240080-sidating-be1.hafizmuh.site/api' + '/profile';
 
 export const useUserProfileStore = defineStore('userProfile', {
     state: () => ({
