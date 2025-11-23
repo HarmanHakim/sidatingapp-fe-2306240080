@@ -1,5 +1,4 @@
 # Build stage
-
 FROM node:20 AS build-stage
 
 
@@ -7,6 +6,7 @@ WORKDIR /app
 
 
 COPY package*.json ./
+COPY package-lock.json ./
 
 
 ARG VITE_API_URL
@@ -19,7 +19,7 @@ ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_BE2_API_URL=$VITE_BE2_API_URL
 
 
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 
 COPY . .
@@ -35,16 +35,13 @@ RUN npm run build
 
 
 # Production stage
-
 FROM nginx:alpine AS production-stage
-
 
 RUN rm -rf /usr/share/nginx/html/*
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
 
 EXPOSE 80
 
